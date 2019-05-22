@@ -376,6 +376,12 @@ broom::tidy(S_model3)
 
 Under this new model, we can see a slight degrade in our confidence for certain aspects like the year trend, but we can more confidently predict for different age groups, and for specific gendered age groups, like males from 35-54 years old. However, this model does not seem to have fixed our inability to reject the null for 75+ year olds.
 
+These models allow us to create equations to relate suicide rates back to age groups and genders. For example if we wanted to say find the rate for males frm aged 25-34 in the year 2019 we would compute the following.
+
+> -4089.2 + 2.071(2019) + 241.99 + 89.02 + 226.9 = 650.26
+
+Based off this we can see our model estimates around 650 men from the ages of 25-34 will kill themselves in 2019. This obviously isn't perfectly accurrate but since our model does yield significant results we can use this to predict which groups will be most at risk in each year and attempt to prevent further suicide. This type of prediction works for any of the models we have created so far, by simply reading the numbers as we did and calculating for a specific year.
+
 We can also look at the graph of the residuals to see if there was any improvement in the model.
 
 ```{r step28, include=TRUE}
