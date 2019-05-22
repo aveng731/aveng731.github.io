@@ -406,4 +406,8 @@ Throughout this analysis, we found significant trends within modern data for sui
 
 While our models for predicting suicide off of these factors were not fully accepted, as our model for 75+ year olds failed to yield significant data, we can still utilize the models for other ages and genders. Also, with more data and possibly a lager time span moving into the future we could create stronger models for the other groups as well allowing us to better predict suicide risk based off gender, age, and year for individuals going forward. Suicide in Western Culture, as well as all cultures across the world, continues to be a large issue and by collecting data and conducting statistical analyses on this data will allow us to better prevent suicide in the future.
 
+Utilizing these models we can tell that men are more likely to commit suicide than women are. Also, we can conclude that certain age groups are at higher risk of committing suicide then othes, specifically that those age 35-54 years old and 55-74 years old are at a higher risk than people outside those age ranges. Lastly, we can tell that in recent years suicides have been rising. This highlights a huge issue as something about our societiy's development is driving people to suicide.
+
+This data can be used to identify those most at risk of suicide. By identifying people who may be at risk we can better reduce the issue of suicide in our society by focusing on helping those groups who are most likely to commit suicide and work to lower suicide rates. Suicide is a growing issue in our society and data such as the data analyzed in this analysis can work to reduce the issue of suicide in society.
+
 
