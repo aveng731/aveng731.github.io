@@ -1,0 +1,387 @@
+---
+title: "Final Project"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploratory Analysis of Suicide Data Across Western Cultures
+
+# Alex Eng
+
+# Introduction
+
+The purpose of this document is to analyze suicide data taken over three decades inside Western Countries. This analysis is done in hope to discover trends in suicide as to identify risk factors and identify factors that would put someone at higher risk of suicide. Such information is important in order to prevent future suicides and identify what kinds of factors may put someone at higher risk of committing suicide. It will also provide insight into whether suicide rates are rising or falling under our current cultural development.
+
+
+# The Dataset
+
+The dataset being used is a compiled set of data on suicide across multiple countries within the year range of 1985 and 2016. This dataset can be retrieved from the link below and only contains a single csv:
+
+* https://www.kaggle.com/russellyates88/suicide-rates-overview-1985-to-2016
+    + master.csv
+    
+The table includes 12 different attributes, notably containing things like:
+
+* Country
+* Year
+* Sex
+* Age Range
+* Number of Suicides
+* HDI for the year
+* GDP for the year
+* Etc.
+
+# Step 1: Initial Data Analysis
+
+Within this section we will create different data plots to analyze the trands within our data and see what kinds of relationships exist within it. This will inform us to what might be good trands to test later with hypothesis testing and regression tests. 
+
+We will be focusing specifically on Western Societies, filtering for mainland North America and the EU.
+
+> Note we also remove the 2016 data as at the time of this dataset the year was incomplete
+
+```{r loaddf, include=TRUE}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+# Reading in Data from csv repository to a usable dataframe
+suicide_df <- read.csv("~/Documents/Spring 2019/CMSC 320/Final Project/Data/Suicides_data.csv")
+
+EU <- c("Austria", "Belgium", "Croatia", "Cyprus", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Matla", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden", "United Kingdom")
+ North_America <- c("United States", "Mexico", "Canada")
+ 
+filtered_df <- suicide_df %>%
+  filter(country %in% EU |country %in% North_America ) %>%
+  filter(year <= 2015)
+
+head(filtered_df)
+
+```
+
+Now that we have the dataset loaded we can start to look for trends in suicide rates based off different factors. We can start with something simple, say by plotting suicides over time to see if there is any type of relationship there. For this we want a scatter plot of the data plotted with a trend line, this can be achieves using the r ggplot() function and then add a trendline using geom_smooth(method=lm). 
+
+```{r step1graph1, include=TRUE}
+
+# Using a pipeline and ggplot we can create a scatter plot of suicide rates over time
+filtered_df %>%
+  ggplot(aes(x = year, y = suicides_no)) +
+  geom_point() +
+  geom_smooth(method = lm)+
+  labs(title = "Suicides over TIme",
+       x = "Year",
+       y = "Suicides")
+
+```
+
+The above graph is not very helpful as the data is clumped and there isn't a clear picture of what is going on. We can try to get a clearer picture of the relationship between time and suicides by summarizing our data per year. We can do this by first combining each age group oer country into one total number of suicides per year in each of our countries. Then we can take the average per year across all the countries to get a larger view of how suicides trends overall as time progresses.
+
+```{r step1graph2, include=TRUE}
+
+# By first modifying the data then plotting against time we can get a better understanding 
+# of the relationship between suicides and time
+filtered_df %>%
+  group_by(year) %>%
+  summarize(avg_suicides = mean(suicides_no)) %>%
+  ggplot(aes(x = year, y = avg_suicides)) +
+  geom_point() +
+  geom_smooth(method=lm) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Average Suicides over Time",
+       x = "Year",
+       y = "Average Suicides")
+
+```
+
+From the above graph we can observe a weak negative linear correlation between year and the average number of suicides, that is as time passes suicides seem to trend downwards. This seems to tell us that as time passes suicides tend to go down on average.
+
+However this doesn't look like a very strong correlation, as it has large variations, and we can attempt to find better predictors to discover more about the data, say looking at rates within different age groups rather than suicides over time. Since the age groups act more at categorical variables rather than a continum in this data set and we care about occurrances within each group we can utilize a bar graph rather than a scatter plot. This will allow us to identify differences in suicide rates between the age groups represented in the data.
+
+```{r step1graph3, include=TRUE}
+
+# We first group over age and summarize the graph to get solidified numbers about suicides 
+# per age group. Then we fit it to a bar graph to see the discrepencies in occurrances 
+# between different age groups.
+filtered_df %>%
+  group_by(age) %>%
+  summarize(suicides = mean(suicides_no)) %>%
+  ggplot(aes(x = age, y = suicides)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Average Suicides for each age range",
+       x = "Age Range",
+       y = "Average Suicides")
+```
+
+The bar graph above shows that there is a clear discrepency between the different age groups and suicide rates. Where those within the age range of 35-54 seem to be much more at risk than the other age groups. We can use this data to help predict if a person is more at risk of suicide by assessing their age group's rate of suicide and using this as part of a prediction strategy.
+
+Another aspect that should be taken into account is a person's gender. As within western cultures (and cultures in general) the role of a person can very based off their gender.
+
+```{r step1graph4, include=TRUE}
+
+# This time we add the extra grouping by sex in order to differentiate between men 
+# and women within each age group, allowing us to see which has a higher likelihood 
+# to commit suicide
+filtered_df %>%
+  group_by(country, age, sex) %>%
+  summarize(total_suicides = sum(suicides_no)) %>%
+  group_by(age, sex) %>%
+  summarize(suicides = mean(total_suicides)) %>%
+  ggplot(aes(x = age, y = suicides, color = sex)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Total Suicides per age Group (Colored by sex)",
+       x = "Age Range",
+       y = "Total Suicides")
+```
+
+With the added coloring based off sex we can also see that (with the exception of the 5-14 age range) the on average the majority of each age group committing suicide appears to be men. This, at a glance, shows us that men are more at risk when it comes to suicide than women.
+
+Now that we are aware of the clear relationship between age group and suicide and the discrepancies between genders we can use this to improve our estimation of suicide rates over time. 
+
+```{r step1graph5, include=TRUE}
+
+# By first modifying the data then plotting against time we can get a better 
+# understanding of the relationship between suicides and time
+filtered_df %>%
+  group_by(year, age, sex) %>%
+  summarize(suicides = mean(suicides_no)) %>%
+  ggplot(aes(x = year, y = suicides, color = sex)) +
+  facet_grid(~age) +
+  geom_point() +
+  geom_smooth(method=lm) +
+  labs(title = "Suicides over Time Grouped by Age",
+       x = "Year",
+       y = "Suicides") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+Compared to when we just plotted suicides against time there are much clearer trends within each of the individual age groups, with rates falling in the younger groups and increasing within older ages. This could provide insight into how aging could affect someone's tendency to commit suicide as well as bring up further questions about the mental health of people in western society as they age.
+
+Lastly if we observe each of these we can see a slight upward trend in recent years so lets look at this graph but only looking in the 21st century years (post 2000).
+
+```{r step1graph6, include=TRUE}
+
+# We can add a simple filter before modifying our data to make sure all the data is 
+# in the 21st century
+filtered_df %>%
+  filter( year >= 2000) %>%
+  group_by(year, age, sex) %>%
+  summarize(suicides = mean(suicides_no)) %>%
+  ggplot(aes(x = year, y = suicides, color = sex)) +
+  facet_grid(~age) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  labs(title = "Suicides over Time Grouped by Age Post-2000",
+       x = "Year",
+       y = "Suicides") +
+  theme(axis.text.x = element_text(angle = 45))
+
+# We can similarly do this for data before the 21st century
+
+filtered_df %>%
+  filter( year < 2000) %>%
+
+  group_by(year, age, sex) %>%
+  summarize(suicides = mean(suicides_no)) %>%
+  ggplot(aes(x = year, y = suicides, color = sex)) +
+  facet_grid(~age) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  labs(title = "Suicides over Time Grouped by Age Pre-2000",
+       x = "Year",
+       y = "Suicides") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+From the above two graphs we can clearly see that going into the 21st century suicide rates were steadily declining but once we crossed into the 21st century this changed and rates began to stagnate and even increase for some age groups. 
+
+
+# Step 2: Hypothesis Testing and Regression Modeling
+
+Now that we have taken a look at our data and observed certain trends within it we can attempt to fit a regression model to suicide as to help predict the risk of an individual committing suicide. We can use this in a hypothesis testing scenario, that is I hypothesize that there is a significant relationship between time and suicides, within different sexes and age groups. 
+
+Since we want a model that can predict risk for people in the 21st century we will base our model off of the data in the 21st century (post 2000), as the trends in data seem to have shifted drastically since the turn of the century. 
+
+To begin we can start from the beginning like in Part 2 and simply base our model off of the passing of time, to see if years is a good estimator for suicide rates in the 21st century.
+
+```{r step21, include=TRUE}
+
+# We first store our filtered data frame by filter out all years before 2000
+twentyfirstst_df <- filtered_df %>%
+  filter(year >= 2000)
+
+# We create a model to predict the number of suicides off of just year
+S_model <- lm(suicides_no~year, data=twentyfirstst_df)
+
+# We use the Broom module to portray our model as a dataframe
+broom::tidy(S_model)
+```
+
+Within null hypothesis testing we set a standard alpha level (also known as rejection threshold) of 0.05.  Meaning we want our p-value for the model to be smaller than our threshhold. Based off the above data we can see year is not a good predictor for suicide occurrances by itself.
+
+To further stress this idea, lets look at a graph of the residuals against the fitted values for this model. This graph will show us how well the model predicts the data by adhearing to certain properties based off the assumptions of linear regression. We would expect a good model to have a residuals graph that is centered around 0 and has no obvious correlation between the x and y axis.
+
+```{r step22, include=TRUE}
+
+# We first augment our model to pull out plottable values using the broom module
+S_augment <- S_model %>%
+  broom::augment()
+
+
+# Using out agumented dataframe we can plot a graph of the residuals 
+S_augment %>%
+  ggplot(mapping=aes(x=factor(.fitted), y=.resid)) +
+  geom_point() +
+  labs(title="Residuals vs. Fitted Values",
+       x="Fitted Values",
+       y="Residuals") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+The above graph for the year model clearly shows that the model does not fit the data well. Not only does the data not center at 0 but it also shows clear linear trends within itself. This tells us that year alone does not create a good model for suicide rates and we should look to other factors to help better predict suicide trends.
+
+We can use the residuals to see what type of relationship year could have with them in order to more accurratley predict suicide rates. If a factor that is known to affect suicide chances has a trend within the residuals of the year only model then the factor mostl ikely has an interaction with year. However, if this trend is not found the factor should be used as an additional predictor rather than one that has an interaction with year.
+
+```{r step23, include=TRUE}
+
+# We first augment our model to pull out plottable values using the broom module
+S_augment <- S_model %>%
+  broom::augment()
+
+# In order to use data from our original dataframe we have to join our model with our data.
+joined_df <- S_augment %>%
+  left_join(twentyfirstst_df, c("year", "suicides_no"))
+
+# Using out agumented dataframe we can plot a graph of the residuals 
+joined_df %>%
+  ggplot(mapping=aes(x= age , y=.resid)) +
+  geom_boxplot()+
+  labs(title="Residuals vs. Age Group",
+       x="Age Group",
+       y="Residuals") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+The plot above shows how there is no specific trend between the age groups and the residual values of the year model. This means that when we add age to our model we should use it as an independent predictor from year rather than one with an interaction with year.
+
+With this new knowledge we can create a new model that takes age into account alongside year.
+
+
+```{r step24, include=TRUE}
+
+# We first store our filtered data frame by filter out all years before 2000
+twentyfirstst_df <- filtered_df %>%
+  filter(year >= 2000)
+
+# We create a model to predict the number of suicides off of just year
+S_model2 <- lm(suicides_no~year + age, data=twentyfirstst_df)
+
+# We use the Broom module to portray our model as a dataframe
+broom::tidy(S_model2)
+```
+
+Under this new model we can see a drastic improvement in our p-values. From the above regression model we can confidently reject the null hypothesis of no correlation between year and suicides for all age groups except age 75+. This can be seen by each age group as well as the intercept and year have p values <= 0.05 and the 75+ age group having over > 0.05. Compared to our original year only model this is a drastic improvement.
+
+We can also look at the graph of the residuals to see if there was any improvement in the model.
+
+```{r step25, include=TRUE}
+
+# We first augment our model to pull out plottable values using the broom module
+S_augment2 <- S_model2 %>%
+  broom::augment()
+
+
+# Using out agumented dataframe we can plot a graph of the residuals 
+S_augment2 %>%
+  ggplot(mapping=aes(x=factor(.fitted), y=.resid)) +
+  geom_point() +
+  labs(title="Residuals vs. Fitted Values",
+       x="Fitted Values",
+       y="Residuals") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+The above graph now atleast adheres to one property for a good residuals graph, being centered around 0.  However the graph does show a clear relathionship between the fitted and redisual values. This could infer that there is another factor affecting our model that is not taken into account.
+
+From our analysis in Part 2 we also know that sex is a strong differenciator when it comes to suicide. Specifically in Part 2 we showed men and women tend to have large differences in suicide rates even within the same age group, this would lead us to want to make a graph of sex against our residuals to see if sex as a predictor should be used in a relationship or its own predictor.
+
+```{r step26, include=TRUE}
+
+# We first augment our model to pull out plottable values using the broom module
+S_augment2 <- S_model2 %>%
+  broom::augment()
+
+# In order to use data from our original dataframe we have to join our model with our data.
+joined_df2 <- S_augment2 %>%
+  left_join(twentyfirstst_df, c("year", "suicides_no"))
+
+# Using out agumented dataframe we can plot a graph of the residuals 
+joined_df2 %>%
+  ggplot(mapping=aes(x= sex, y=.resid)) +
+  geom_bar(stat="identity")+
+  labs(title="Residuals vs. Sex",
+       x="Sex",
+       y="Residuals") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+Since there does seem to be a slight trend between sex and our residual values, shown by how female and male trend upward from one to another, we should add sex as a relational predictor rather than its own independent factor. Lets see what the model looks like under this new addition.
+
+
+```{r step27, include=TRUE}
+
+# We first store our filtered data frame by filter out all years before 2000
+twentyfirstst_df <- filtered_df %>%
+  filter(year >= 2000)
+
+# We create a model to predict the number of suicides off of just year
+S_model3 <- lm(suicides_no~year + age*sex, data=twentyfirstst_df)
+
+# We use the Broom module to portray our model as a dataframe
+broom::tidy(S_model3)
+```
+
+Under this new model we can see a slight degrade in our confidence for certain aspects like the year trend, but we can more confidently predict for different age groups, and for specific gendered age groups, like males from 35-54 years old. However this model does not seem to have fixed our inability to reject the null for 75+ year olds.
+
+We can also look at the graph of the residuals to see if there was any improvement in the model.
+
+```{r step28, include=TRUE}
+
+# We first augment our model to pull out plottable values using the broom module
+S_augment3 <- S_model3 %>%
+  broom::augment()
+
+
+# Using out agumented dataframe we can plot a graph of the residuals 
+S_augment3 %>%
+  ggplot(mapping=aes(x=factor(.fitted), y=.resid)) +
+  geom_point() +
+  labs(title="Residuals vs. Fitted Values",
+       x="Fitted Values",
+       y="Residuals") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+Here even though the graph seems the same, there are many more data points and seems more randomly distributed than the previous models. This shows that there are probably more factors to be taken into account to make a perfect model, but as it stands the model will confidently predict suicide rates for all people under 75 years of age.
+
+We can further analyze our different models by preforming an anova test on each in order to analyze their abilities to reject the null and minimize the residual sum of squares.
+
+
+```{r step29, include=TRUE}
+anova(S_model, S_model2, S_model3)
+```
+
+The above anova test confirms our suspicions of our models improving with each iteration. The first model doesn't even reject the null under the Anova, while the third better minimizes the RSS (residual sum of squares) over the second model, showing it better fits and predicts our data.
+
+# Conclusions
+
+Throughout this analysis we found significant trends within modern data for suicides in the Western world. That is by graphically analyzing the data we discovered different trends that exist between factors such as sex, age and year. These are important things to keep in mind when analyzing the overall trends of suicide in Western cultures. Based off the graphs seen in step 1 we saw increases overal in the ocurrances of suicide in the Western World, highlighting the possible severity of the issue.
+
+While our models for predicting suicide off of these factors were not fully accepted, as our model for 75+ year olds failed to yield significant data, we can still utilize the models for other ages and genders. Also, with more data and possibly a lager time span moving into the future we could create stronger models for the other groups as well allowing us to better predict suicide risk based off gender, age, and year for individuals going forward. Suicide in Western Culture as well as all cultures across the world continues to be a large issue and by collecting data and conducting statistical analysises on this data will allow us to better prevent suicide in the future.
+
+
