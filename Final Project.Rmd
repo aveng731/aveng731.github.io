@@ -65,7 +65,7 @@ head(filtered_df)
 
 ```
 
-Now that we have the dataset loaded we can start to look for trends in suicide rates based on different factors. We can start with something simple, say by plotting suicides over time to see if there is any type of relationship there. For this we want a scatter plot of the data plotted with a trend line, this can be achieved using the r ggplot() function and then add a trendline using geom_smooth(method=lm). 
+Now that we have the dataset loaded we can start to look for trends in suicide rates based on different factors. We can start with something simple, say by plotting suicides over time to see if there is any type of relationship there. For this we want a scatter plot of the data plotted with a trend line, this can be achieved using the r ggplot() function and then add a trendline using geom_smooth(method=lm). Documentation for ggplot functionality can be found [here](https://ggplot2.tidyverse.org/reference/).
 
 ```{r step1graph1, include=TRUE}
 
@@ -246,6 +246,8 @@ broom::tidy(S_model)
 
 Within null hypothesis testing, we set a standard alpha level (also known as rejection threshold) of 0.05.  Meaning we want our p-value for the model to be smaller than our threshold. Based on the above data we can see year is not a good predictor for suicide occurrences by itself.
 
+Explanations on why we choose 0.05 as standard alpha and more in-depth hypothesis testing can be found [here](http://www.hcbravo.org/IntroDataSci/bookdown-notes/experiment-design-and-hypothesis-testing.html).
+
 To further stress this idea, let's look at a graph of the residuals against the fitted values for this model. This graph will show us how well the model predicts the data by adhering to certain properties based on the assumptions of linear regression. We would expect a good model to have a residuals graph that is centered around 0 and has no obvious correlation between the x and y-axis.
 
 ```{r step22, include=TRUE}
@@ -269,6 +271,8 @@ The above graph for the year model clearly shows that the model does not fit the
 
 We can use the residuals to see what type of relationship year could have with them in order to more accurrately predict suicide rates. If a factor that is known to affect suicide chances has a trend within the residuals of the year only model then the factor most likely has an interaction with year. However, if this trend is not found the factor should be used as an additional predictor rather than one that has an interaction with year.
 
+Documentation on the broom module used below can be found [here](https://www.rdocumentation.org/packages/broom/versions/0.5.2).
+
 ```{r step23, include=TRUE}
 
 # We first augment our model to pull out plottable values using the broom module
@@ -290,6 +294,8 @@ joined_df %>%
 ```
 
 The plot above shows how there is no specific trend between the age groups and the residual values of the year model. This means that when we add age to our model we should use it as an independent predictor from year rather than one with an interaction with year.
+
+Explanations on relationships and predictors within linear models can be found [here](http://www.hcbravo.org/IntroDataSci/bookdown-notes/linear-regression.html).
 
 With this new knowledge, we can create a new model that takes age into account alongside year.
 
@@ -410,4 +416,9 @@ Utilizing these models we can tell that men are more likely to commit suicide th
 
 This data can be used to identify those most at risk of suicide. By identifying people who may be at risk we can better reduce the issue of suicide in our society by focusing on helping those groups who are most likely to commit suicide and work to lower suicide rates. Suicide is a growing issue in our society and data such as the data analyzed in this analysis can work to reduce the issue of suicide in society.
 
+Further readings on this topic can be found on these sites, as well as more data:
+
+* [World Health Organization](https://www.who.int/mental_health/suicide-prevention/en/)
+* [Center for Disease Control](https://www.cdc.gov/violenceprevention/suicide/index.html)
+* [National Institue of Mental Health](https://www.nimh.nih.gov/health/statistics/suicide.shtml)
 
